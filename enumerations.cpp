@@ -1,112 +1,67 @@
-#include "CGAL/Combination_enumerator.h"
+#include <CGAL/Combination_enumerator.h>
 #include <iostream>
 #include <vector>
-
-using namespace std;
+#include <algorithm>
 
 void print(std::vector<int>& v)
 {
-	cout << "{";
-	for(int i=0; i<v.size(); ++i)
-	{
-		cout << v[i];
-		if( i < v.size() - 1)
-			cout<<" ";
-	}
-	cout << "}";
-}
-
-void fill_all_indices(vector<int>& all, int first, int last)
-{
-	int i = 0;
-	for(int v = first; v <= last; ++v)
-	{
-		all[i] = v;
-		++i;
-	}
-	assert(i == last - first + 1);
-  assert(all.size() == i);
-}
-
-unsigned int do_enumerations(const int k, const int first, const int last)
-{
-
-  unsigned int n(0);
-  //cout << "Taking " << k << " distinct integers in the range [" << first << ", " << last << "]:\n";
-
-  CGAL::Combination_enumerator<int> combi(k, first, last + 1);
-  
-  int range1 = k;
-  int range2 = last - first + 1 - k;
-
-  vector<int> pair1;
-  pair1.resize(range1);
-  vector<int> pair2;
-  pair2.resize(range2);
-
-  vector<int> all(last - first + 1);
-  fill_all_indices(all, first, last);
-
-  while( ! combi.finished() ) 
+  for(int i=0; i<v.size(); ++i)
   {
-      //cout << " {";
-      for(int i = 0; i < k; ++i) 
-      {
-          //cout << combi[i];
-
-           pair1[i] = combi[i];
-
-          //if( i < k - 1 )
-          //    cout << ' ';
-      }
-      //cout << '}';
-
-
-      sort(pair1.begin(), pair1.end());
-      sort(all.begin(), all.end());
-
-      /*
-      std::vector<int>::iterator it = 
-        std::set_difference(pair1.begin(), pair1.end(), all.begin(), all.end(), pair2.begin());
-        */
-
-      //pair2.resize(it - pair2.begin());
-
-      set_difference(pair1.begin(), pair1.end(), all.begin(), all.end(), back_inserter(pair2));
-
-      print(pair1); cout << " "; print(pair2);
-      cout << endl;
-      
-      ++n;
-      ++combi;
+    std::cout << v[i] << " ";
   }
-  //cout << endl << "Enumerated " << n << " combinations." << endl;
-
-  return n;
 }
 
+int do_permutations(const int s, std::vector<int>& hs,
+                    std::vector<std::vector<int>>& subsets)
+{
+
+  const int first = hs.front();
+  const int last = hs.back();
+  std::sort(hs.begin(), hs.end());
+
+  std::vector<int> p1(s);
+  std::vector<int> p2(hs.size() - s);
+
+  CGAL::Combination_enumerator<int> permutations(s, first, last + 1);
+
+  int p = 0;
+  while(!permutations.finished())
+  {
+    for(int i=0; i<s; ++i)
+    {
+      p1[i] = permutations[i];
+      ++p;
+    }
+
+    std::sort(p1.begin(), p1.end());    
+    std::set_symmetric_difference(p1.begin(), p1.end(), hs.begin(), hs.end(), 
+                                  std::back_inserter(p2));
+
+    print(p1); std::cout << "--"; print(p2);
+
+    subsets.push_back(p1);
+    subsets.push_back(p2);
+  }
+
+}
 
 
 int main()
 {
 
-    const int first(1), last(3);
+  const int s = 1;
+  std::vector<int> hs = {1, 2, 3};
 
-    vector<int> s = {1 , 2 , 3};
-
-    unsigned int N(0);
-    for(const int k : s)
-    {
-    	unsigned int n = do_enumerations(k, first, last);
-    	N += n;
-    }
-
-    cout << "Enumerated " << N << " combinations." << endl;
+  std::vector<std::vector<int>> phi;
+  do_permutations(s, hs, phi);
 
 
+  for(int i=0; i < phi.size(); ++i)
+  {
+    print(phi[i]);
+    std::cout << std::endl;
+  }
 
-   
 
-
-    return 0;
+  return 0;
 }
